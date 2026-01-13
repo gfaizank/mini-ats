@@ -121,7 +121,16 @@ export async function getCompanyMembers(companyId: string) {
   console.log('🔵 [GET MEMBERS] Fetching company members with emails...', { companyId })
 
   const { data, error } = await supabase
-    .rpc('get_company_members_with_emails', { company_uuid: companyId })
+    .rpc('get_company_members_with_emails' as any, { company_uuid: companyId }) as {
+      data: Array<{
+        id: string
+        user_id: string
+        role: 'admin' | 'member'
+        created_at: string
+        email: string
+      }> | null
+      error: any
+    }
 
   if (error) {
     console.error('❌ [GET MEMBERS] Failed to fetch members:', error)
@@ -166,7 +175,7 @@ export async function inviteMember(companyId: string, email: string, role: 'admi
 
   // Look up user by email in auth.users
   const { data: authUsers, error: lookupError } = await supabase
-    .rpc('get_user_id_by_email', { user_email: email })
+    .rpc('get_user_id_by_email' as any, { user_email: email }) as { data: string | null, error: any }
 
   let targetUserId: string
 

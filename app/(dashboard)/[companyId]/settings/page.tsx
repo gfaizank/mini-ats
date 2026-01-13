@@ -6,6 +6,14 @@ import { TeamMembersCard } from '@/components/company/team-members-card'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 
+interface Member {
+  id: string
+  user_id: string
+  role: 'admin' | 'member'
+  created_at: string
+  email: string
+}
+
 export default async function SettingsPage({
   params,
 }: {
@@ -16,7 +24,7 @@ export default async function SettingsPage({
   
   const { data: { user } } = await supabase.auth.getUser()
   const companyResult = await getCompanyById(companyId) as { data?: any; error?: string }
-  const { data: members } = await getCompanyMembers(companyId)
+  const membersResult = await getCompanyMembers(companyId) as { data?: Member[]; error?: string }
   const { role: userRole } = await getUserRole(companyId)
 
   if (companyResult.error || !companyResult.data) {
@@ -24,6 +32,7 @@ export default async function SettingsPage({
   }
 
   const company = companyResult.data
+  const members: Member[] = membersResult.data || []
 
   // Get usage stats
   const { count: jobsCount } = await supabase
@@ -97,7 +106,7 @@ export default async function SettingsPage({
         </Card>
 
         <TeamMembersCard 
-          members={members || []} 
+          members={members} 
           companyId={companyId}
           userRole={userRole || 'member'}
           currentUserId={user?.id || ''}
