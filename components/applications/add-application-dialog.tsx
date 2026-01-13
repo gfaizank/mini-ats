@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { createApplication } from '@/app/actions/applications'
-import { Plus } from 'lucide-react'
+import { Plus, Loader2 } from 'lucide-react'
 
 interface Job {
   id: string
@@ -72,8 +72,8 @@ export function AddApplicationDialog({ candidateId, jobs }: AddApplicationDialog
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="job">Job</Label>
-            <Select value={selectedJobId} onValueChange={setSelectedJobId}>
-              <SelectTrigger id="job">
+            <Select value={selectedJobId} onValueChange={setSelectedJobId} disabled={loading}>
+              <SelectTrigger id="job" disabled={loading}>
                 <SelectValue placeholder="Select a job" />
               </SelectTrigger>
               <SelectContent>
@@ -86,11 +86,18 @@ export function AddApplicationDialog({ candidateId, jobs }: AddApplicationDialog
             </Select>
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading || !selectedJobId}>
-              {loading ? 'Adding...' : 'Add Application'}
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                'Add Application'
+              )}
             </Button>
           </div>
         </form>

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { updateApplicationStage } from '@/app/actions/applications'
-import { User, Mail } from 'lucide-react'
+import { User, Mail, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import type { ApplicationStage } from '@/types/database.types'
 
@@ -40,8 +40,11 @@ const stages: { value: ApplicationStage; label: string; color: string }[] = [
 
 export function KanbanBoard({ applications, companyId }: KanbanBoardProps) {
   const [optimisticApplications, setOptimisticApplications] = useState(applications)
+  const [updatingApplicationId, setUpdatingApplicationId] = useState<string | null>(null)
 
   async function handleStageChange(applicationId: string, newStage: string) {
+    setUpdatingApplicationId(applicationId)
+    
     // Optimistic update
     setOptimisticApplications(prev =>
       prev.map(app =>
@@ -57,6 +60,8 @@ export function KanbanBoard({ applications, companyId }: KanbanBoardProps) {
       setOptimisticApplications(applications)
       alert(result.error)
     }
+    
+    setUpdatingApplicationId(null)
   }
 
   return (
@@ -75,52 +80,64 @@ export function KanbanBoard({ applications, companyId }: KanbanBoardProps) {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 space-y-2">
-              {stageApplications.map((application) => (
-                <Card key={application.id} className="p-3 hover:shadow-md transition-shadow bg-white">
-                  <div className="space-y-2">
-                    <Link
-                      href={`/${companyId}/candidates/${application.candidates.id}`}
-                      className="block cursor-pointer hover:opacity-80 transition-opacity"
-                    >
-                      <div className="flex items-start gap-2">
-                        <User className="h-4 w-4 text-[#64748b] mt-0.5" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate text-[#1a1a1a]">
-                            {application.candidates.name}
-                          </p>
-                          <p className="text-xs text-[#64748b] truncate flex items-center gap-1">
-                            <Mail className="h-3 w-3" />
-                            {application.candidates.email}
-                          </p>
+              {stageApplications.map((application) => {
+                const isUpdating = updatingApplicationId === application.id
+                
+                return (
+                  <Card key={application.id} className="p-3 hover:shadow-md transition-shadow bg-white">
+                    <div className="space-y-2">
+                      <Link
+                        href={`/${companyId}/candidates/${application.candidates.id}`}
+                        className="block cursor-pointer hover:opacity-80 transition-opacity"
+                      >
+                        <div className="flex items-start gap-2">
+                          <User className="h-4 w-4 text-[#64748b] mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate text-[#1a1a1a]">
+                              {application.candidates.name}
+                            </p>
+                            <p className="text-xs text-[#64748b] truncate flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
+                              {application.candidates.email}
+                            </p>
+                          </div>
                         </div>
+                      </Link>
+                      <Link
+                        href={`/${companyId}/jobs/${application.jobs.id}`}
+                        className="block cursor-pointer hover:underline"
+                      >
+                        <p className="text-xs text-[#64748b] truncate">
+                          {application.jobs.title}
+                        </p>
+                      </Link>
+                      <div className="relative">
+                        {isUpdating && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded z-10">
+                            <Loader2 className="h-4 w-4 animate-spin text-[#64748b]" />
+                          </div>
+                        )}
+                        <Select
+                          value={application.stage}
+                          onValueChange={(value) => handleStageChange(application.id, value)}
+                          disabled={isUpdating}
+                        >
+                          <SelectTrigger className="h-7 text-xs" disabled={isUpdating}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {stages.map((s) => (
+                              <SelectItem key={s.value} value={s.value} className="text-xs">
+                                {s.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                    </Link>
-                    <Link
-                      href={`/${companyId}/jobs/${application.jobs.id}`}
-                      className="block cursor-pointer hover:underline"
-                    >
-                      <p className="text-xs text-[#64748b] truncate">
-                        {application.jobs.title}
-                      </p>
-                    </Link>
-                    <Select
-                      value={application.stage}
-                      onValueChange={(value) => handleStageChange(application.id, value)}
-                    >
-                      <SelectTrigger className="h-7 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {stages.map((s) => (
-                          <SelectItem key={s.value} value={s.value} className="text-xs">
-                            {s.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </Card>
-              ))}
+                    </div>
+                  </Card>
+                )
+              })}
               {stageApplications.length === 0 && (
                 <p className="text-xs text-[#94a3b8] text-center py-4">No applications</p>
               )}
