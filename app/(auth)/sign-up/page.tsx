@@ -24,6 +24,9 @@ export default function SignUpPage() {
   const [plans, setPlans] = useState<Plan[]>([])
   const [selectedPlan, setSelectedPlan] = useState<string>('')
   const [loadingPlans, setLoadingPlans] = useState(true)
+  const [companyName, setCompanyName] = useState('')
+  const [checkingCompanyName, setCheckingCompanyName] = useState(false)
+  const [companyNameError, setCompanyNameError] = useState('')
 
   useEffect(() => {
     async function fetchPlans() {
@@ -50,9 +53,49 @@ export default function SignUpPage() {
     fetchPlans()
   }, [])
 
+  // Check company name availability with debouncing
+  useEffect(() => {
+    if (!companyName || companyName.trim().length < 2) {
+      setCompanyNameError('')
+      return
+    }
+
+    const timer = setTimeout(async () => {
+      setCheckingCompanyName(true)
+      const supabase = createClient()
+      
+      const { data, error } = await supabase
+        .from('companies')
+        .select('id, name')
+        .ilike('name', companyName.trim())
+        .limit(1)
+        .single()
+
+      setCheckingCompanyName(false)
+
+      if (data && !error) {
+        setCompanyNameError(`Company name "${companyName.trim()}" is already taken`)
+      } else {
+        setCompanyNameError('')
+      }
+    }, 500) // Debounce by 500ms
+
+    return () => clearTimeout(timer)
+  }, [companyName])
+
   const handleSubmit = async (formData: FormData) => {
     if (!selectedPlan) {
       toast.error('Please select a plan')
+      return
+    }
+
+    if (companyNameError) {
+      toast.error('Please fix the errors before submitting')
+      return
+    }
+
+    if (!companyName || companyName.trim().length < 2) {
+      toast.error('Please enter a valid company name')
       return
     }
 
@@ -60,7 +103,11 @@ export default function SignUpPage() {
 
     startTransition(async () => {
       const result = await signUp(formData)
-      if (result?.success) {
+      if (result?.error) {
+        toast.error(result.error, {
+          duration: 5000,
+        })
+      } else if (result?.success) {
         toast.success('Account created! Please check your email to verify your account before signing in.', {
           duration: 6000,
         })
@@ -81,14 +128,35 @@ export default function SignUpPage() {
           <form action={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="companyName">Company Name</Label>
-              <Input
-                id="companyName"
-                name="companyName"
-                type="text"
-                placeholder="Acme Inc"
-                required
-                disabled={isPending || loadingPlans}
-              />
+              <div className="relative">
+                <Input
+                  id="companyName"
+                  name="companyName"
+                  type="text"
+                  placeholder="Acme Inc"
+                  required
+                  disabled={isPending || loadingPlans}
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  className={companyNameError ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                />
+                {checkingCompanyName && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                  </div>
+                )}
+              </div>
+              {companyNameError && (
+                <p className="text-sm text-red-600 flex items-center gap-1">
+                  {companyNameError}
+                </p>
+              )}
+              {companyName && !companyNameError && !checkingCompanyName && companyName.trim().length >= 2 && (
+                <p className="text-sm text-green-600 flex items-center gap-1">
+                  <Check className="h-3 w-3" />
+                  Company name is available
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -158,7 +226,11 @@ export default function SignUpPage() {
                 </>
               )}
             </div>
-            <Button type="submit" className="w-full" disabled={isPending || loadingPlans || !selectedPlan}>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isPending || loadingPlans || !selectedPlan || !!companyNameError || checkingCompanyName || !companyName.trim()}
+            >
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

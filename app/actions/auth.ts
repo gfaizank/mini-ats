@@ -11,6 +11,20 @@ export async function signUp(formData: FormData) {
   const companyName = formData.get('companyName') as string || 'My Company'
   const planId = formData.get('planId') as string
 
+  // Check if company name already exists
+  console.log('🔵 Step 0: Checking if company name exists...')
+  const { data: existingCompany, error: checkError } = await adminClient
+    .from('companies')
+    .select('id, name')
+    .ilike('name', companyName)
+    .limit(1)
+    .single()
+
+  if (existingCompany && !checkError) {
+    console.log('❌ Company name already exists:', companyName)
+    return { error: `Company name "${companyName}" is already taken. Please choose a different name.` }
+  }
+
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
