@@ -8,9 +8,19 @@ export async function signUp(formData: FormData) {
   const supabase = await createClient()
   const adminClient = createAdminClient()
 
+  const companyName = formData.get('companyName') as string || 'My Company'
+  const planId = formData.get('planId') as string
+
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/sign-in?verified=true`,
+      data: {
+        company_name: companyName,
+        plan_id: planId,
+      }
+    }
   }
 
   console.log('🔵 Step 1: Creating auth user...')
@@ -18,22 +28,29 @@ export async function signUp(formData: FormData) {
 
   if (error) {
     console.error('❌ Auth signup failed:', error)
-    redirect(`/sign-up?error=${encodeURIComponent(error.message)}`)
+    return { error: error.message }
   }
 
   console.log('✅ Step 1: Auth user created:', authData.user?.id)
+  
+  // If email confirmation is required, return success without creating company yet
+  if (authData.user && !authData.user.email_confirmed_at) {
+    console.log('📧 Email confirmation required. Company will be created after verification.')
+    return { success: true, emailConfirmationRequired: true }
+  }
 
-  if (authData.user) {
+  if (authData.user && authData.user.email_confirmed_at) {
     // Create a default company for the new user
     const companyName = formData.get('companyName') as string || 'My Company'
+    const planId = formData.get('planId') as string
     
-    console.log('🔵 Step 2: Looking for Free plan...')
-    // Get the Free plan ID
+    console.log('🔵 Step 2: Validating plan...')
+    // Validate the selected plan exists
     const { data: plan, error: planError } = await supabase
       .from('plans')
-      .select('id')
-      .eq('name', 'Free')
-      .single() as { data: { id: string } | null, error: any }
+      .select('id, name')
+      .eq('id', planId)
+      .single() as { data: { id: string, name: string } | null, error: any }
 
     if (planError || !plan) {
       console.error('❌ Plan lookup failed:', planError)
@@ -45,18 +62,18 @@ export async function signUp(formData: FormData) {
       } else {
         console.log('✅ Auth user deleted')
       }
-      redirect(`/sign-up?error=${encodeURIComponent('Failed to find Free plan. Please contact support.')}`)
+      return { error: 'Invalid plan selected. Please contact support.' }
     }
 
-    console.log('✅ Step 2: Free plan found:', plan.id)
-    console.log('🔵 Step 3: Creating company...', { companyName, plan_id: plan.id })
+    console.log('✅ Step 2: Plan validated:', plan.name, plan.id)
+    console.log('🔵 Step 3: Creating company...', { companyName, plan_id: planId })
 
     // Create company using admin client (bypasses RLS since user session isn't fully established yet)
     const { data: company, error: companyError } = await adminClient
       .from('companies')
       .insert({
         name: companyName,
-        plan_id: plan.id,
+        plan_id: planId,
       })
       .select()
       .single()
@@ -71,7 +88,7 @@ export async function signUp(formData: FormData) {
       } else {
         console.log('✅ Auth user deleted')
       }
-      redirect(`/sign-up?error=${encodeURIComponent(`Failed to create company: ${companyError?.message || 'Unknown error'}`)}`)
+      return { error: `Failed to create company: ${companyError?.message || 'Unknown error'}` }
     }
 
     console.log('✅ Step 3: Company created:', company.id)
@@ -92,15 +109,17 @@ export async function signUp(formData: FormData) {
       // Clean up: delete the auth user and company since we can't complete setup
       await adminClient.auth.admin.deleteUser(authData.user.id)
       await adminClient.from('companies').delete().eq('id', company.id)
-      redirect(`/sign-up?error=${encodeURIComponent(`Failed to set up user permissions: ${memberError.message}`)}`)
+      return { error: `Failed to set up user permissions: ${memberError.message}` }
     }
 
     console.log('✅ Step 4: User added as admin')
     console.log('🎉 Sign-up completed successfully!')
+    
+    revalidatePath('/', 'layout')
+    redirect('/')
   }
 
-  revalidatePath('/', 'layout')
-  redirect('/')
+  return { success: true }
 }
 
 export async function signIn(formData: FormData) {

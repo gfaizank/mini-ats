@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -6,6 +6,7 @@ import { signOut } from '@/app/actions/auth'
 
 export default async function Home() {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   // If user is authenticated, get their companies
@@ -21,7 +22,50 @@ export default async function Home() {
       redirect(`/${memberships[0].company_id}/jobs`)
     }
 
-    // User is authenticated but has no company - show error state
+    // User is authenticated but has no company - check if we need to complete setup
+    const companyName = user.user_metadata?.company_name
+    const planId = user.user_metadata?.plan_id
+
+    if (companyName && planId) {
+      console.log('🔵 Completing company setup for verified user:', user.id)
+      
+      // Validate plan exists
+      const { data: plan } = await supabase
+        .from('plans')
+        .select('id, name')
+        .eq('id', planId)
+        .single()
+
+      if (plan) {
+        // Create company
+        const { data: company, error: companyError } = await adminClient
+          .from('companies')
+          .insert({
+            name: companyName,
+            plan_id: planId,
+          })
+          .select()
+          .single()
+
+        if (company && !companyError) {
+          // Add user as admin
+          const { error: memberError } = await adminClient
+            .from('company_members')
+            .insert({
+              user_id: user.id,
+              company_id: company.id,
+              role: 'admin',
+            })
+
+          if (!memberError) {
+            console.log('✅ Company setup completed!')
+            redirect(`/${company.id}/jobs`)
+          }
+        }
+      }
+    }
+
+    // User is authenticated but has no company and no metadata - show error state
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">

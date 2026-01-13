@@ -6,11 +6,27 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
-import { useTransition } from 'react'
-import { Loader2 } from 'lucide-react'
+import { useTransition, useEffect } from 'react'
+import { Loader2, CheckCircle2 } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
+import { toast } from 'sonner'
 
 export default function SignInPage() {
   const [isPending, startTransition] = useTransition()
+  const searchParams = useSearchParams()
+  const verified = searchParams.get('verified')
+  const error = searchParams.get('error')
+
+  useEffect(() => {
+    if (verified === 'true') {
+      toast.success('Email verified successfully! You can now sign in.', {
+        duration: 5000,
+      })
+    }
+    if (error) {
+      toast.error(decodeURIComponent(error))
+    }
+  }, [verified, error])
 
   const handleSubmit = async (formData: FormData) => {
     startTransition(async () => {
@@ -26,6 +42,19 @@ export default function SignInPage() {
           <CardDescription>
             Sign in to your account to continue
           </CardDescription>
+          {verified === 'true' && (
+            <div className="mt-4 p-3 bg-green-50 rounded-md border border-green-200">
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium text-green-900">Email Verified!</p>
+                  <p className="text-green-700 text-xs mt-1">
+                    Your email has been successfully verified. Please sign in to continue.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <form action={handleSubmit} className="space-y-4">
