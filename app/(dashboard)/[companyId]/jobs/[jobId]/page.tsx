@@ -1,10 +1,10 @@
 import { getJobById, closeJob, reopenJob, archiveJob } from '@/app/actions/jobs'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { ArrowLeft, MapPin, Building, Users } from 'lucide-react'
 import { notFound } from 'next/navigation'
+import JobActions from './job-actions'
 
 interface ApplicationWithCandidate {
   id: string
@@ -36,7 +36,7 @@ export default async function JobDetailPage({
     <div className="max-w-4xl">
       <Link
         href={`/${companyId}/jobs`}
-        className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6"
+        className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6 cursor-pointer"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Jobs
@@ -80,29 +80,13 @@ export default async function JobDetailPage({
                   </span>
                 </div>
               </div>
-              <div className="flex gap-2">
-                {job.status === 'open' && (
-                  <form action={closeJob.bind(null, jobId)}>
-                    <Button type="submit" variant="outline">
-                      Close Job
-                    </Button>
-                  </form>
-                )}
-                {job.status === 'closed' && (
-                  <>
-                    <form action={reopenJob.bind(null, jobId)}>
-                      <Button type="submit" variant="outline">
-                        Reopen Job
-                      </Button>
-                    </form>
-                    <form action={archiveJob.bind(null, jobId)}>
-                      <Button type="submit" variant="outline">
-                        Archive
-                      </Button>
-                    </form>
-                  </>
-                )}
-              </div>
+              <JobActions 
+                jobId={jobId} 
+                status={job.status} 
+                closeJob={closeJob} 
+                reopenJob={reopenJob} 
+                archiveJob={archiveJob} 
+              />
             </div>
           </CardHeader>
           {job.description && (
@@ -129,7 +113,7 @@ export default async function JobDetailPage({
                   <Link
                     key={application.id}
                     href={`/${companyId}/candidates/${application.candidates.id}`}
-                    className="block p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                    className="block p-3 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                   >
                     <div className="flex items-center justify-between">
                       <div>

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { Briefcase, Users, FileText, Settings, LogOut } from 'lucide-react'
+import { Briefcase, Users, FileText, Settings, LogOut, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Tooltip,
@@ -12,6 +12,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { signOut } from '@/app/actions/auth'
+import { useTransition } from 'react'
 
 interface NavItem {
   title: string
@@ -26,6 +27,13 @@ interface DashboardNavProps {
 
 export function DashboardNav({ companyId, isCollapsed = false }: DashboardNavProps) {
   const pathname = usePathname()
+  const [isPending, startTransition] = useTransition()
+
+  const handleSignOut = async () => {
+    startTransition(async () => {
+      await signOut()
+    })
+  }
 
   const navItems: NavItem[] = [
     {
@@ -79,23 +87,28 @@ export function DashboardNav({ companyId, isCollapsed = false }: DashboardNavPro
               </Tooltip>
             )
           })}
-          <form action={signOut} className="mt-auto">
+          <div className="mt-auto">
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <Button
-                  type="submit"
+                  onClick={handleSignOut}
                   variant="ghost"
                   size="icon"
                   className="w-full text-[#64748b] hover:text-[#1a1a1a] hover:bg-[#f8f9fb]"
+                  disabled={isPending}
                 >
-                  <LogOut className="h-5 w-5" />
+                  {isPending ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <LogOut className="h-5 w-5" />
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right" className="ml-2">
-                Sign Out
+                {isPending ? 'Signing out...' : 'Sign Out'}
               </TooltipContent>
             </Tooltip>
-          </form>
+          </div>
         </nav>
       </TooltipProvider>
     )
@@ -123,16 +136,24 @@ export function DashboardNav({ companyId, isCollapsed = false }: DashboardNavPro
           </Link>
         )
       })}
-      <form action={signOut} className="mt-auto">
-        <Button
-          type="submit"
-          variant="ghost"
-          className="w-full justify-start text-[#64748b] hover:text-[#1a1a1a] hover:bg-[#f8f9fb]"
-        >
-          <LogOut className="mr-3 h-4 w-4" />
-          Sign Out
-        </Button>
-      </form>
+      <Button
+        onClick={handleSignOut}
+        variant="ghost"
+        className="mt-auto w-full justify-start text-[#64748b] hover:text-[#1a1a1a] hover:bg-[#f8f9fb]"
+        disabled={isPending}
+      >
+        {isPending ? (
+          <>
+            <Loader2 className="mr-3 h-4 w-4 animate-spin" />
+            Signing out...
+          </>
+        ) : (
+          <>
+            <LogOut className="mr-3 h-4 w-4" />
+            Sign Out
+          </>
+        )}
+      </Button>
     </nav>
   )
 }

@@ -46,7 +46,7 @@ export default async function CandidatesPage({
             const applicationCount = candidate.applications?.length || 0
             
             return (
-              <Link key={candidate.id} href={`/${companyId}/candidates/${candidate.id}`}>
+              <Link key={candidate.id} href={`/${companyId}/candidates/${candidate.id}`} className="cursor-pointer">
                 <Card className="hover:shadow-md transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">

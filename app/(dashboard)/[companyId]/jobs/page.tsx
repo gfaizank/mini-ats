@@ -43,7 +43,7 @@ export default async function JobsPage({
       ) : (
         <div className="grid gap-4">
           {jobs.map((job) => (
-            <Link key={job.id} href={`/${companyId}/jobs/${job.id}`}>
+            <Link key={job.id} href={`/${companyId}/jobs/${job.id}`} className="cursor-pointer">
               <Card className="hover:shadow-md transition-shadow">
                 <CardHeader>
                     <div className="flex items-start justify-between">

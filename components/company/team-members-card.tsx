@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { inviteMember, updateMemberRole, removeMember } from '@/app/actions/companies'
 import { toast } from 'sonner'
-import { UserPlus, Trash2, Settings2 } from 'lucide-react'
+import { UserPlus, Trash2, Settings2, Loader2 } from 'lucide-react'
 
 interface Member {
   id: string
@@ -140,12 +140,13 @@ export function TeamMembersCard({ members, companyId, userRole, currentUserId }:
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
                       required
+                      disabled={isInviting}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="role">Role</Label>
-                    <Select value={inviteRole} onValueChange={(value: 'admin' | 'member') => setInviteRole(value)}>
-                      <SelectTrigger>
+                    <Select value={inviteRole} onValueChange={(value: 'admin' | 'member') => setInviteRole(value)} disabled={isInviting}>
+                      <SelectTrigger disabled={isInviting}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -158,11 +159,18 @@ export function TeamMembersCard({ members, companyId, userRole, currentUserId }:
                     </p>
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setIsInviteOpen(false)}>
+                    <Button type="button" variant="outline" onClick={() => setIsInviteOpen(false)} disabled={isInviting}>
                       Cancel
                     </Button>
                     <Button type="submit" disabled={isInviting}>
-                      {isInviting ? 'Adding...' : 'Add Member'}
+                      {isInviting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Adding...
+                        </>
+                      ) : (
+                        'Add Member'
+                      )}
                     </Button>
                   </div>
                 </form>

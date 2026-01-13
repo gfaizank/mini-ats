@@ -14,7 +14,7 @@ export default async function NewCandidatePage({
     <div className="max-w-2xl">
       <Link
         href={`/${companyId}/candidates`}
-        className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6"
+        className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6 cursor-pointer"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Candidates

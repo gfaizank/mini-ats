@@ -80,7 +80,7 @@ export function KanbanBoard({ applications, companyId }: KanbanBoardProps) {
                   <div className="space-y-2">
                     <Link
                       href={`/${companyId}/candidates/${application.candidates.id}`}
-                      className="block"
+                      className="block cursor-pointer hover:opacity-80 transition-opacity"
                     >
                       <div className="flex items-start gap-2">
                         <User className="h-4 w-4 text-[#64748b] mt-0.5" />
@@ -97,7 +97,7 @@ export function KanbanBoard({ applications, companyId }: KanbanBoardProps) {
                     </Link>
                     <Link
                       href={`/${companyId}/jobs/${application.jobs.id}`}
-                      className="block"
+                      className="block cursor-pointer hover:underline"
                     >
                       <p className="text-xs text-[#64748b] truncate">
                         {application.jobs.title}

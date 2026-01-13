@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Upload } from 'lucide-react'
+import { Upload, Loader2 } from 'lucide-react'
 import { createCandidate } from '@/app/actions/candidates'
 
 export function CandidateForm({ companyId }: { companyId: string }) {
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(formData: FormData) {
     let resumeKey = null
@@ -53,8 +54,15 @@ export function CandidateForm({ companyId }: { companyId: string }) {
     }
 
     // Submit form
-    await createCandidate(companyId, formData)
+    setSubmitting(true)
+    try {
+      await createCandidate(companyId, formData)
+    } finally {
+      setSubmitting(false)
+    }
   }
+  
+  const isLoading = uploading || submitting
 
   return (
     <form action={handleSubmit} className="space-y-4">
@@ -65,6 +73,7 @@ export function CandidateForm({ companyId }: { companyId: string }) {
           name="name"
           placeholder="John Doe"
           required
+          disabled={isLoading}
         />
       </div>
 
@@ -76,6 +85,7 @@ export function CandidateForm({ companyId }: { companyId: string }) {
           type="email"
           placeholder="john@example.com"
           required
+          disabled={isLoading}
         />
       </div>
 
@@ -86,6 +96,7 @@ export function CandidateForm({ companyId }: { companyId: string }) {
           name="phone"
           type="tel"
           placeholder="+1 (555) 123-4567"
+          disabled={isLoading}
         />
       </div>
 
@@ -96,6 +107,7 @@ export function CandidateForm({ companyId }: { companyId: string }) {
           name="linkedin_url"
           type="url"
           placeholder="https://linkedin.com/in/johndoe"
+          disabled={isLoading}
         />
       </div>
 
@@ -108,6 +120,7 @@ export function CandidateForm({ companyId }: { companyId: string }) {
             accept=".pdf,.doc,.docx"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
             className="cursor-pointer"
+            disabled={isLoading}
           />
           {file && (
             <span className="text-sm text-gray-600 flex items-center gap-1">
@@ -125,11 +138,24 @@ export function CandidateForm({ companyId }: { companyId: string }) {
           name="notes"
           placeholder="Any additional notes about the candidate..."
           rows={4}
+          disabled={isLoading}
         />
       </div>
 
-      <Button type="submit" disabled={uploading}>
-        {uploading ? 'Uploading...' : 'Add Candidate'}
+      <Button type="submit" disabled={isLoading}>
+        {uploading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Uploading resume...
+          </>
+        ) : submitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Adding candidate...
+          </>
+        ) : (
+          'Add Candidate'
+        )}
       </Button>
     </form>
   )

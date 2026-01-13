@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Loader2 } from 'lucide-react'
 
 function AcceptInviteContent() {
   const router = useRouter()
@@ -212,7 +213,14 @@ function AcceptInviteContent() {
             </div>
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? 'Setting up your account...' : 'Accept Invitation & Join Team'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Setting up your account...
+                </>
+              ) : (
+                'Accept Invitation & Join Team'
+              )}
             </Button>
           </form>
         </CardContent>

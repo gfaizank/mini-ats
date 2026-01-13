@@ -53,7 +53,7 @@ export default async function CandidateDetailPage({
     <div className="max-w-4xl">
       <Link
         href={`/${companyId}/candidates`}
-        className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6"
+        className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6 cursor-pointer"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Candidates
@@ -79,7 +79,7 @@ export default async function CandidateDetailPage({
                   href={candidate.linkedin_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-blue-600 hover:underline"
+                  className="flex items-center gap-2 text-blue-600 hover:underline cursor-pointer"
                 >
                   <Linkedin className="h-4 w-4" />
                   LinkedIn Profile
@@ -91,7 +91,7 @@ export default async function CandidateDetailPage({
                   href={resumeDownloadUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-blue-600 hover:underline"
+                  className="flex items-center gap-2 text-blue-600 hover:underline cursor-pointer"
                 >
                   <FileText className="h-4 w-4" />
                   Download Resume
@@ -135,7 +135,7 @@ export default async function CandidateDetailPage({
                   <Link
                     key={application.id}
                     href={`/${companyId}/jobs/${application.jobs.id}`}
-                    className="block p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                    className="block p-3 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                   >
                     <div className="flex items-center justify-between">
                       <div>
