@@ -260,11 +260,18 @@ export async function inviteMember(companyId: string, email: string, role: 'admi
 
 export async function updateMemberRole(companyId: string, memberId: string, role: 'admin' | 'member') {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
+  
+  console.log('🔵 [UPDATE ROLE] Step 1: Getting current user...')
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
+    console.error('❌ [UPDATE ROLE] Not authenticated')
     return { error: 'Not authenticated' }
   }
+
+  console.log('✅ [UPDATE ROLE] Step 1: Current user:', user.id)
+  console.log('🔵 [UPDATE ROLE] Step 2: Checking if current user is admin...', { companyId, userId: user.id })
 
   // Check if current user is admin
   const { data: membership } = await supabase
@@ -275,18 +282,27 @@ export async function updateMemberRole(companyId: string, memberId: string, role
     .single()
 
   if (membership?.role !== 'admin') {
+    console.error('❌ [UPDATE ROLE] User is not admin:', membership?.role)
     return { error: 'Only admins can update member roles' }
   }
 
-  const { error } = await supabase
+  console.log('✅ [UPDATE ROLE] Step 2: User is admin')
+  console.log('🔵 [UPDATE ROLE] Step 3: Updating member role...', { memberId, companyId, newRole: role })
+
+  // Use admin client to bypass RLS
+  const { error } = await adminClient
     .from('company_members')
     .update({ role })
     .eq('id', memberId)
     .eq('company_id', companyId)
 
   if (error) {
+    console.error('❌ [UPDATE ROLE] Failed to update role:', error)
     return { error: error.message }
   }
+
+  console.log('✅ [UPDATE ROLE] Step 3: Role updated successfully')
+  console.log('🎉 [UPDATE ROLE] Update completed successfully!')
 
   revalidatePath(`/${companyId}/settings`)
   return { success: true }
@@ -294,11 +310,18 @@ export async function updateMemberRole(companyId: string, memberId: string, role
 
 export async function removeMember(companyId: string, memberId: string) {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
+  
+  console.log('🔵 [REMOVE MEMBER] Step 1: Getting current user...')
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
+    console.error('❌ [REMOVE MEMBER] Not authenticated')
     return { error: 'Not authenticated' }
   }
+
+  console.log('✅ [REMOVE MEMBER] Step 1: Current user:', user.id)
+  console.log('🔵 [REMOVE MEMBER] Step 2: Checking if current user is admin...', { companyId, userId: user.id })
 
   // Check if current user is admin
   const { data: membership } = await supabase
@@ -309,18 +332,27 @@ export async function removeMember(companyId: string, memberId: string) {
     .single()
 
   if (membership?.role !== 'admin') {
+    console.error('❌ [REMOVE MEMBER] User is not admin:', membership?.role)
     return { error: 'Only admins can remove members' }
   }
 
-  const { error } = await supabase
+  console.log('✅ [REMOVE MEMBER] Step 2: User is admin')
+  console.log('🔵 [REMOVE MEMBER] Step 3: Removing member...', { memberId, companyId })
+
+  // Use admin client to bypass RLS
+  const { error } = await adminClient
     .from('company_members')
     .delete()
     .eq('id', memberId)
     .eq('company_id', companyId)
 
   if (error) {
+    console.error('❌ [REMOVE MEMBER] Failed to delete member:', error)
     return { error: error.message }
   }
+
+  console.log('✅ [REMOVE MEMBER] Step 3: Member removed successfully')
+  console.log('🎉 [REMOVE MEMBER] Removal completed successfully!')
 
   revalidatePath(`/${companyId}/settings`)
   return { success: true }
