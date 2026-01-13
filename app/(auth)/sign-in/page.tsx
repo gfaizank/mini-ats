@@ -6,12 +6,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
-import { useTransition, useEffect } from 'react'
+import { useTransition, useEffect, Suspense } from 'react'
 import { Loader2, CheckCircle2 } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 
-export default function SignInPage() {
+function SignInForm() {
   const [isPending, startTransition] = useTransition()
   const searchParams = useSearchParams()
   const verified = searchParams.get('verified')
@@ -100,6 +100,22 @@ export default function SignInPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#f8f9fb] px-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <SignInForm />
+    </Suspense>
   )
 }
 
